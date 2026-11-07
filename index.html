@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lab Maya: Satuan Panjang Kelas 3 SD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: #1e293b;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            touch-action: none; /* Prevent pull-to-refresh on mobile */
+        }
+
+        /* 16:9 Container */
+        #app-container {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-width: 177.78vh; /* (16/9) * 100vh */
+            max-height: 100vh;
+            background-color: #f0fdf4; /* Light green bg */
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Portrait orientation warning */
+        @media (orientation: portrait) {
+            #portrait-warning {
+                display: flex !important;
+            }
+        }
+
+        /* Staircase CSS */
+        .staircase-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            padding-top: 10px;
+        }
+        .stair {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s, background-color 0.3s;
+            position: relative;
+        }
+        .stair.active {
+            transform: scale(1.1);
+            border: 4px solid #fef08a; /* Yellow highlight */
+            z-index: 10;
+        }
+        
+        .stair-label {
+            position: absolute;
+            right: -60px;
+            font-size: 0.8rem;
+            color: #334155;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .tab-content {
+            display: none;
+            height: 100%;
+            width: 100%;
+        }
+        .tab-content.active {
+            display: flex;
+        }
+
+        .btn-bounce:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Portrait Warning -->
+    <div id="portrait-warning" class="hidden fixed inset-0 bg-blue-900 z-[100] flex-col items-center justify-center text-white text-center p-8">
+        <svg class="w-24 h-24 mb-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10.452a2 2 0 011.552-1.954l10-2.222a2 2 0 012.396 1.552l2.222 10a2 2 0 01-1.552 2.396l-10 2.222a2 2 0 01-2.396-1.552l-2.222-10A2 2 0 014 10.452z"></path></svg>
+        <h1 class="text-3xl font-bold mb-2">Mohon Putar Layar HP!</h1>
+        <p class="text-xl">Aplikasi ini dirancang untuk mode Lanskap (Mendatar).</p>
+    </div>
+
+    <div id="app-container">
+        
+        <!-- Splash Screen -->
+        <div id="splash-screen" class="absolute inset-0 bg-gradient-to-b from-blue-400 to-indigo-600 z-50 flex flex-col items-center justify-center text-white transition-opacity duration-500">
+            <h1 class="text-5xl md:text-6xl font-bold mb-4 drop-shadow-lg text-center px-4 animate-bounce-in">📐 Lab Maya<br><span class="text-yellow-300">Satuan Panjang</span></h1>
+            <p class="text-xl mb-8">Untuk Kelas 3 SD</p>
+            
+            <div id="loading-container" class="w-64 h-6 bg-white/30 rounded-full overflow-hidden mb-6 border-2 border-white">
+                <div id="loading-bar" class="h-full bg-yellow-400 w-0 transition-all duration-[2000ms] ease-out"></div>
+            </div>
+            <p id="loading-text" class="text-sm font-semibold mb-6">Memuat...</p>
+
+            <button id="btn-mulai" class="hidden px-10 py-4 bg-yellow-400 text-blue-900 text-2xl font-bold rounded-full shadow-xl border-4 border-yellow-200 hover:bg-yellow-300 btn-bounce transform transition hover:scale-105">
+                ▶ MULAI BELAJAR
+            </button>
+        </div>
+
+        <!-- Main App (Header + Navigation) -->
+        <div class="h-[15%] bg-indigo-600 text-white flex items-center justify-between px-4 shadow-md rounded-b-2xl z-10 shrink-0">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl">📏</span>
+                <h2 class="text-2xl font-bold hidden sm:block">Satuan Panjang</h2>
+            </div>
+            <div class="flex gap-1 md:gap-2 h-full py-2">
+                <button onclick="switchTab('teori')" id="tab-teori" class="tab-btn bg-white/20 hover:bg-white/40 px-3 md:px-5 rounded-t-xl font-semibold border-b-4 border-transparent transition-all h-full text-sm md:text-base">📚 Teori</button>
+                <button onclick="switchTab('prosedur')" id="tab-prosedur" class="tab-btn bg-white/20 hover:bg-white/40 px-3 md:px-5 rounded-t-xl font-semibold border-b-4 border-transparent transition-all h-full text-sm md:text-base">📋 Prosedur</button>
+                <button onclick="switchTab('simulasi')" id="tab-simulasi" class="tab-btn bg-white/20 hover:bg-white/40 px-3 md:px-5 rounded-t-xl font-semibold border-b-4 border-transparent transition-all h-full text-sm md:text-base">🎮 Simulasi</button>
+                <button onclick="switchTab('lkpd')" id="tab-lkpd" class="tab-btn bg-white/20 hover:bg-white/40 px-3 md:px-5 rounded-t-xl font-semibold border-b-4 border-transparent transition-all h-full text-sm md:text-base">📝 LKPD</button>
+                <button onclick="switchTab('pengembang')" id="tab-pengembang" class="tab-btn bg-white/20 hover:bg-white/40 px-3 md:px-5 rounded-t-xl font-semibold border-b-4 border-transparent transition-all h-full text-sm md:text-base">🧑‍🏫 Info</button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 relative bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCI+CjxyZWN0IHdpZHRoPSIyMCIgaGVpZ2h0PSIyMCIgZmlsbD0iI2YwZmRmNCI+PC9yZWN0Pgo8Y2lyY2xlIGN4PSIyIiBjeT0iMiIgcj0iMiIgZmlsbD0iI2QxZmFlNSI+PC9jaXJjbGU+Cjwvc3ZnPg==')] overflow-hidden">
+            
+            <!-- TAB: TEORI -->
+            <div id="content-teori" class="tab-content flex-col items-center justify-center p-4">
+                <div class="bg-white p-4 md:p-6 rounded-3xl shadow-xl border-4 border-blue-200 w-11/12 max-w-4xl flex flex-row items-center justify-around h-[90%]">
+                    <div class="flex-1 text-center px-4">
+                        <h3 class="text-3xl font-bold text-indigo-700 mb-4">Tangga Satuan Panjang</h3>
+                        <p class="text-lg text-gray-700 mb-4 bg-yellow-100 p-3 rounded-xl">Untuk mengukur panjang, kita menggunakan satuan baku. Urutannya sangat penting!</p>
+                        <div class="flex flex-col gap-2 font-bold text-xl text-left bg-blue-50 p-4 rounded-xl">
+                            <div class="flex items-center gap-2"><span class="text-red-500 text-3xl">⬇️</span> Turun 1 tangga = Dikali 10</div>
+                            <div class="flex items-center gap-2"><span class="text-green-500 text-3xl">⬆️</span> Naik 1 tangga = Dibagi 10</div>
+                        </div>
+                    </div>
+                    <div class="flex-1 flex justify-center items-center h-full">
+                        <!-- Static stairs image using divs -->
+                        <div class="staircase-container gap-1 w-full max-w-[250px] relative">
+                            <div class="w-full flex justify-start"><div class="px-4 py-1 bg-red-500 rounded-md text-white font-bold">km (kilometer)</div></div>
+                            <div class="w-full flex justify-start pl-4"><div class="px-4 py-1 bg-orange-500 rounded-md text-white font-bold">hm (hektometer)</div></div>
+                            <div class="w-full flex justify-start pl-8"><div class="px-4 py-1 bg-yellow-500 rounded-md text-white font-bold">dam (dekameter)</div></div>
+                            <div class="w-full flex justify-start pl-12"><div class="px-4 py-1 bg-green-500 rounded-md text-white font-bold">m (meter)</div></div>
+                            <div class="w-full flex justify-start pl-16"><div class="px-4 py-1 bg-teal-500 rounded-md text-white font-bold">dm (desimeter)</div></div>
+                            <div class="w-full flex justify-start pl-20"><div class="px-4 py-1 bg-blue-500 rounded-md text-white font-bold">cm (sentimeter)</div></div>
+                            <div class="w-full flex justify-start pl-24"><div class="px-4 py-1 bg-purple-500 rounded-md text-white font-bold">mm (milimeter)</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: PROSEDUR -->
+            <div id="content-prosedur" class="tab-content flex-col items-center justify-center p-4">
+                <div class="bg-white p-6 md:p-8 rounded-3xl shadow-xl border-4 border-green-200 w-11/12 max-w-3xl h-[90%] flex flex-col justify-center">
+                    <h3 class="text-3xl font-bold text-green-700 mb-6 text-center">Cara Menggunakan Simulasi 🎮</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-lg font-medium text-gray-700">
+                        <div class="flex items-start gap-3 bg-green-50 p-3 rounded-xl border border-green-100">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shrink-0">1</span>
+                            <p>Buka tab <strong>Simulasi</strong>.</p>
+                        </div>
+                        <div class="flex items-start gap-3 bg-green-50 p-3 rounded-xl border border-green-100">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shrink-0">2</span>
+                            <p>Ketik angka yang ingin diubah pada kotak angka.</p>
+                        </div>
+                        <div class="flex items-start gap-3 bg-green-50 p-3 rounded-xl border border-green-100">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shrink-0">3</span>
+                            <p>Pilih <strong>Satuan Awal</strong> (misal: m).</p>
+                        </div>
+                        <div class="flex items-start gap-3 bg-green-50 p-3 rounded-xl border border-green-100">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shrink-0">4</span>
+                            <p>Pilih <strong>Satuan Tujuan</strong> (misal: cm).</p>
+                        </div>
+                        <div class="flex items-start gap-3 bg-green-50 p-3 rounded-xl border border-green-100 md:col-span-2">
+                            <span class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center shrink-0">5</span>
+                            <p>Klik tombol <strong>"Hitung!"</strong> dan perhatikan katak / animasi melompat di tangga satuan!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SIMULASI -->
+            <div id="content-simulasi" class="tab-content flex-row p-4 gap-4">
+                <!-- Control Panel -->
+                <div class="w-1/3 bg-white rounded-3xl shadow-lg border-4 border-indigo-200 p-4 flex flex-col justify-center h-full">
+                    <h3 class="text-2xl font-bold text-indigo-700 mb-4 text-center">Panel Kontrol</h3>
+                    
+                    <div class="mb-3">
+                        <label class="block text-gray-700 font-bold mb-1 text-sm">Masukkan Angka:</label>
+                        <input type="number" id="sim-input" class="w-full p-2 border-2 border-indigo-300 rounded-xl text-lg font-bold text-center focus:outline-none focus:border-indigo-500" placeholder="Contoh: 5" min="0">
+                    </div>
+                    
+                    <div class="flex gap-2 mb-4">
+                        <div class="flex-1">
+                            <label class="block text-gray-700 font-bold mb-1 text-sm">Dari:</label>
+                            <select id="sim-from" class="w-full p-2 border-2 border-indigo-300 rounded-xl font-bold bg-indigo-50 cursor-pointer text-sm">
+                                <option value="0">km</option>
+                                <option value="1">hm</option>
+                                <option value="2">dam</option>
+                                <option value="3" selected>m</option>
+                                <option value="4">dm</option>
+                                <option value="5">cm</option>
+                                <option value="6">mm</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-gray-700 font-bold mb-1 text-sm">Ke:</label>
+                            <select id="sim-to" class="w-full p-2 border-2 border-indigo-300 rounded-xl font-bold bg-indigo-50 cursor-pointer text-sm">
+                                <option value="0">km</option>
+                                <option value="1">hm</option>
+                                <option value="2">dam</option>
+                                <option value="3">m</option>
+                                <option value="4">dm</option>
+                                <option value="5" selected>cm</option>
+                                <option value="6">mm</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button onclick="runSimulation()" class="w-full bg-indigo-600 text-white font-bold py-3 rounded-xl shadow-md hover:bg-indigo-700 btn-bounce mb-2">🚀 Hitung!</button>
+                    <button onclick="resetSimulation()" class="w-full bg-gray-200 text-gray-700 font-bold py-2 rounded-xl hover:bg-gray-300 btn-bounce text-sm">🔄 Reset</button>
+                </div>
+                
+                <!-- Animation Area -->
+                <div class="w-2/3 bg-white rounded-3xl shadow-lg border-4 border-indigo-200 p-4 flex flex-col items-center justify-between relative h-full">
+                    <div class="w-full text-center bg-indigo-50 py-2 rounded-xl font-bold text-indigo-800 text-lg border border-indigo-100" id="sim-proses">
+                        Siap untuk menghitung!
+                    </div>
+                    
+                    <div id="stairs-container" class="staircase-container gap-1 w-full max-w-sm flex-1 justify-center py-2 relative">
+                        <!-- JS akan membuat tangga simulasi di sini -->
+                    </div>
+
+                    <div id="sim-hasil-container" class="hidden absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-yellow-400 border-4 border-white text-blue-900 px-6 py-4 rounded-3xl shadow-2xl z-20 text-center">
+                        <p class="text-sm font-bold mb-1">Hasil Akhir:</p>
+                        <p class="text-4xl font-black"><span id="sim-hasil"></span> <span id="sim-hasil-unit"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: LKPD -->
+            <div id="content-lkpd" class="tab-content flex-col p-4">
+                <div class="bg-white p-4 rounded-3xl shadow-xl border-4 border-pink-200 w-full h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-2xl font-bold text-pink-700">Lembar Kerja 📝</h3>
+                        <div class="flex gap-2">
+                            <button onclick="checkAnswers()" class="bg-green-500 text-white px-4 py-2 rounded-xl font-bold hover:bg-green-600 btn-bounce shadow-md">Cek Jawaban</button>
+                            <button onclick="resetLKPD()" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 btn-bounce">Reset</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 overflow-y-auto pr-2 grid grid-cols-1 md:grid-cols-2 gap-3 custom-scrollbar">
+                        <!-- Q1 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="5000">
+                            <span>1. &nbsp; 5 km = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q2 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="300">
+                            <span>2. &nbsp; 3 m = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>cm</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q3 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="4">
+                            <span>3. &nbsp; 40 mm = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>cm</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q4 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="70">
+                            <span>4. &nbsp; 7000 m = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>hm</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q5 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="20">
+                            <span>5. &nbsp; 2 dam = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q6 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="15">
+                            <span>6. &nbsp; 1500 cm = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q7 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="800">
+                            <span>7. &nbsp; 8 hm = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q8 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="12000">
+                            <span>8. &nbsp; 12 km = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q9 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="60">
+                            <span>9. &nbsp; 600 dm = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>m</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                        <!-- Q10 -->
+                        <div class="bg-pink-50 p-3 rounded-2xl border-2 border-pink-100 flex items-center justify-between text-lg md:text-xl font-bold lkpd-q" data-ans="9000">
+                            <span>10. &nbsp; 9 m = </span>
+                            <div class="flex items-center gap-2">
+                                <input type="number" class="lkpd-input w-20 md:w-24 p-1 md:p-2 text-center border-2 border-pink-300 rounded-xl focus:outline-none" placeholder="...">
+                                <span>mm</span>
+                                <span class="lkpd-icon w-6 md:w-8 text-xl md:text-2xl text-center"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: PENGEMBANG -->
+            <div id="content-pengembang" class="tab-content flex-col items-center justify-center p-4">
+                <div class="bg-white p-8 rounded-3xl shadow-xl border-4 border-purple-200 w-full max-w-md text-center flex flex-col items-center">
+                    <div class="w-32 h-32 bg-purple-100 rounded-full border-4 border-purple-400 flex items-center justify-center text-5xl mb-4 shadow-inner">
+                        🧑‍🏫
+                    </div>
+                    <h3 class="text-3xl font-bold text-purple-700 mb-2">Profil Pengembang</h3>
+                    <div class="w-16 h-1 bg-purple-300 mb-4 rounded-full"></div>
+                    <p class="text-xl font-semibold text-gray-700">Guru Kelas 3 SD</p>
+                    <p class="text-md text-gray-500 mb-6">Pecinta Media Pembelajaran Interaktif</p>
+                    
+                    <div class="bg-purple-50 p-4 rounded-xl text-sm text-gray-600 text-left w-full border border-purple-100">
+                        <p><strong>Aplikasi:</strong> Lab Maya Satuan Panjang</p>
+                        <p><strong>Versi:</strong> 1.0 (Offline Standalone)</p>
+                        <p><strong>Tujuan:</strong> Membantu siswa kelas 3 SD memahami konsep konversi satuan baku panjang dengan cara yang menyenangkan.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- AUDIO SYSTEM (Synthesizer for full offline support without MP3 files) -->
+    <script>
+        // --- AUDIO MANAGER ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(freq, type, duration, vol=0.1) {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            
+            gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        }
+
+        const sound = {
+            click: () => playTone(600, 'sine', 0.1, 0.05),
+            start: () => {
+                playTone(400, 'sine', 0.1, 0.1);
+                setTimeout(() => playTone(600, 'sine', 0.1, 0.1), 100);
+                setTimeout(() => playTone(800, 'sine', 0.3, 0.1), 200);
+            },
+            jumpDown: () => playTone(300, 'triangle', 0.15, 0.1),
+            jumpUp: () => playTone(500, 'triangle', 0.15, 0.1),
+            success: () => {
+                playTone(523.25, 'sine', 0.1, 0.1); // C5
+                setTimeout(() => playTone(659.25, 'sine', 0.1, 0.1), 100); // E5
+                setTimeout(() => playTone(783.99, 'sine', 0.2, 0.1), 200); // G5
+            },
+            wrong: () => {
+                playTone(300, 'sawtooth', 0.2, 0.1);
+                setTimeout(() => playTone(250, 'sawtooth', 0.3, 0.1), 150);
+            }
+        };
+
+        // UI Click listeners for sounds
+        document.querySelectorAll('button, select, input').forEach(el => {
+            el.addEventListener('mousedown', () => sound.click());
+        });
+
+        // --- SPLASH SCREEN LOGIC ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const loadingBar = document.getElementById('loading-bar');
+            const loadingText = document.getElementById('loading-text');
+            const btnMulai = document.getElementById('btn-mulai');
+            const loadingContainer = document.getElementById('loading-container');
+
+            // Simulate loading
+            setTimeout(() => {
+                loadingBar.style.width = '100%';
+            }, 100);
+
+            setTimeout(() => {
+                loadingContainer.classList.add('hidden');
+                loadingText.classList.add('hidden');
+                btnMulai.classList.remove('hidden');
+            }, 2100);
+
+            btnMulai.addEventListener('click', () => {
+                sound.start();
+                const splash = document.getElementById('splash-screen');
+                splash.style.opacity = '0';
+                setTimeout(() => splash.remove(), 500);
+                
+                // Initialize default tab and simulation
+                switchTab('teori');
+                buildStairs();
+            });
+        });
+
+        // --- TAB NAVIGATION LOGIC ---
+        const tabs = ['teori', 'prosedur', 'simulasi', 'lkpd', 'pengembang'];
+        function switchTab(tabId) {
+            tabs.forEach(t => {
+                document.getElementById(`content-${t}`).classList.remove('active');
+                const btn = document.getElementById(`tab-${t}`);
+                btn.classList.remove('bg-white', 'text-indigo-700', 'border-yellow-400');
+                btn.classList.add('text-white', 'border-transparent');
+            });
+
+            document.getElementById(`content-${tabId}`).classList.add('active');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            activeBtn.classList.add('bg-white', 'text-indigo-700', 'border-yellow-400');
+            activeBtn.classList.remove('text-white', 'border-transparent');
+        }
+
+        // --- SIMULATION LOGIC ---
+        const units = [
+            { id: 'km', color: 'bg-red-500', name: 'kilometer' },
+            { id: 'hm', color: 'bg-orange-500', name: 'hektometer' },
+            { id: 'dam', color: 'bg-yellow-500', name: 'dekameter' },
+            { id: 'm', color: 'bg-green-500', name: 'meter' },
+            { id: 'dm', color: 'bg-teal-500', name: 'desimeter' },
+            { id: 'cm', color: 'bg-blue-500', name: 'sentimeter' },
+            { id: 'mm', color: 'bg-purple-500', name: 'milimeter' }
+        ];
+
+        let isAnimating = false;
+
+        function buildStairs() {
+            const container = document.getElementById('stairs-container');
+            container.innerHTML = '';
+            
+            units.forEach((u, index) => {
+                const step = document.createElement('div');
+                step.className = 'w-full flex justify-start';
+                // Indentation formula to make it look like stairs
+                step.style.paddingLeft = `${index * 12}%`;
+                
+                step.innerHTML = `
+                    <div id="stair-${index}" class="stair px-3 py-2 ${u.color} w-16 h-8 text-sm flex-shrink-0">
+                        ${u.id}
+                        <span class="stair-label hidden sm:block">${u.name}</span>
+                    </div>
+                `;
+                container.appendChild(step);
+            });
+        }
+
+        async function runSimulation() {
+            if (isAnimating) return;
+            
+            const inputVal = parseFloat(document.getElementById('sim-input').value);
+            if (isNaN(inputVal) || inputVal < 0) {
+                alert('Tolong masukkan angka yang benar ya!'); // Simplified fallback text
+                return;
+            }
+
+            const fromIdx = parseInt(document.getElementById('sim-from').value);
+            const toIdx = parseInt(document.getElementById('sim-to').value);
+            
+            // Reset previous highlights
+            document.querySelectorAll('.stair').forEach(el => el.classList.remove('active'));
+            document.getElementById('sim-hasil-container').classList.add('hidden');
+            
+            isAnimating = true;
+            const processText = document.getElementById('sim-proses');
+            
+            let currentVal = inputVal;
+            let currentIdx = fromIdx;
+            
+            // Initial step highlight
+            document.getElementById(`stair-${currentIdx}`).classList.add('active');
+            processText.innerHTML = `Mulai dari <span class="text-blue-600 font-black">${inputVal} ${units[fromIdx].id}</span>`;
+            
+            await sleep(1000);
+
+            const steps = Math.abs(toIdx - fromIdx);
+            const isDown = toIdx > fromIdx;
+
+            if (steps === 0) {
+                processText.innerHTML = "Sama satuannya, tidak perlu melompat!";
+            } else {
+                for (let i = 0; i < steps; i++) {
+                    // Remove highlight from previous
+                    document.getElementById(`stair-${currentIdx}`).classList.remove('active');
+                    
+                    if (isDown) {
+                        currentIdx++;
+                        currentVal *= 10;
+                        sound.jumpDown();
+                        processText.innerHTML = `Turun 1 tangga <span class="text-red-500 font-black">(x10)</span> ➡️ ${currentVal} ${units[currentIdx].id}`;
+                    } else {
+                        currentIdx--;
+                        currentVal /= 10;
+                        sound.jumpUp();
+                        // Format to avoid long decimals due to floating point math
+                        currentVal = parseFloat(currentVal.toPrecision(10));
+                        processText.innerHTML = `Naik 1 tangga <span class="text-green-500 font-black">(:10)</span> ➡️ ${currentVal} ${units[currentIdx].id}`;
+                    }
+                    
+                    document.getElementById(`stair-${currentIdx}`).classList.add('active');
+                    await sleep(800);
+                }
+            }
+
+            // Final Result
+            sound.success();
+            processText.innerHTML = "Selesai!";
+            document.getElementById('sim-hasil').innerText = currentVal;
+            document.getElementById('sim-hasil-unit').innerText = units[toIdx].id;
+            document.getElementById('sim-hasil-container').classList.remove('hidden');
+            
+            isAnimating = false;
+        }
+
+        function resetSimulation() {
+            if(isAnimating) return;
+            document.getElementById('sim-input').value = '';
+            document.getElementById('sim-proses').innerHTML = "Siap untuk menghitung!";
+            document.getElementById('sim-hasil-container').classList.add('hidden');
+            document.querySelectorAll('.stair').forEach(el => el.classList.remove('active'));
+        }
+
+        // --- LKPD LOGIC ---
+        function checkAnswers() {
+            const questions = document.querySelectorAll('.lkpd-q');
+            let allCorrect = true;
+
+            questions.forEach(q => {
+                const correctAns = parseFloat(q.getAttribute('data-ans'));
+                const inputEl = q.querySelector('.lkpd-input');
+                const iconEl = q.querySelector('.lkpd-icon');
+                const userAns = parseFloat(inputEl.value);
+
+                inputEl.classList.remove('border-pink-300', 'border-green-500', 'border-red-500', 'bg-green-100', 'bg-red-100');
+
+                if (isNaN(userAns)) {
+                    allCorrect = false;
+                    iconEl.innerHTML = '';
+                    inputEl.classList.add('border-pink-300');
+                } else if (userAns === correctAns) {
+                    iconEl.innerHTML = '✅';
+                    inputEl.classList.add('border-green-500', 'bg-green-100');
+                } else {
+                    allCorrect = false;
+                    iconEl.innerHTML = '❌';
+                    inputEl.classList.add('border-red-500', 'bg-red-100');
+                }
+            });
+
+            if (allCorrect) {
+                sound.success();
+            } else {
+                sound.wrong();
+            }
+        }
+
+        function resetLKPD() {
+            const questions = document.querySelectorAll('.lkpd-q');
+            questions.forEach(q => {
+                const inputEl = q.querySelector('.lkpd-input');
+                const iconEl = q.querySelector('.lkpd-icon');
+                inputEl.value = '';
+                iconEl.innerHTML = '';
+                inputEl.classList.remove('border-green-500', 'border-red-500', 'bg-green-100', 'bg-red-100');
+                inputEl.classList.add('border-pink-300');
+            });
+        }
+
+        // Utils
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+    </script>
+</body>
+</html>
